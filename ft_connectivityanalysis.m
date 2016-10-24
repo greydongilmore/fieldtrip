@@ -397,9 +397,16 @@ if any(~isfield(data, inparam)) || (isfield(data, 'crsspctrm') && (ischar(inpara
       if strcmp(inparam, 'crsspctrm')
         if isfield(data, 'fourierspctrm')
           [data, powindx, hasrpt] = univariate2bivariate(data, 'fourierspctrm', 'crsspctrm', dtype, 'cmb', cfg.channelcmb, 'keeprpt', normrpt);
-        elseif strcmp(inparam, 'crsspctrm') && isfield(data, 'powspctrm')
+        elseif isfield(data, 'crsspctrm') && isfield(data, 'powspctrm')
           % if input data is old-fashioned, i.e. contains powandcsd
           [data, powindx, hasrpt] = univariate2bivariate(data, 'powandcsd', 'crsspctrm', dtype, 'cmb', cfg.channelcmb, 'keeprpt', normrpt);
+        elseif isfield(data, 'mom')
+          % input data is recognized as freq, is parcellated source-level data
+          % convert mom into fourierspctrm and convert
+          data.fourierspctrm = cat(1, data.mom{:}).';
+          data.dimord        = 'rpttap_chan_freq';
+          data               = rmfield(data, {'mom' 'momdimord'});
+          [data, powindx, hasrpt] = univariate2bivariate(data, 'fourierspctrm', 'crsspctrm', dtype, 'cmb', cfg.channelcmb, 'keeprpt', normrpt);
         elseif isfield(data, 'labelcmb')
           powindx = labelcmb2indx(data.labelcmb);
         else
@@ -407,9 +414,16 @@ if any(~isfield(data, inparam)) || (isfield(data, 'crsspctrm') && (ischar(inpara
         end
       elseif strcmp(inparam, 'powcovspctrm')
         if isfield(data, 'powspctrm'),
-          [data, powindx] = univariate2bivariate(data, 'powspctrm', 'powcovspctrm', dtype, 'demeanflag', strcmp(cfg.removemean, 'yes'), 'cmb', cfg.channelcmb, 'sqrtflag', strcmp(cfg.method, 'amplcorr'));
+          [data, powindx, hasrpt] = univariate2bivariate(data, 'powspctrm', 'powcovspctrm', dtype, 'demeanflag', strcmp(cfg.removemean, 'yes'), 'cmb', cfg.channelcmb, 'sqrtflag', strcmp(cfg.method, 'amplcorr'));
         elseif isfield(data, 'fourierspctrm'),
-          [data, powindx] = univariate2bivariate(data, 'fourierspctrm', 'powcovspctrm', dtype, 'demeanflag', strcmp(cfg.removemean, 'yes'), 'cmb', cfg.channelcmb, 'sqrtflag', strcmp(cfg.method, 'amplcorr'));
+          [data, powindx, hasrpt] = univariate2bivariate(data, 'fourierspctrm', 'powcovspctrm', dtype, 'demeanflag', strcmp(cfg.removemean, 'yes'), 'cmb', cfg.channelcmb, 'sqrtflag', strcmp(cfg.method, 'amplcorr'));
+        elseif isfield(data, 'mom')
+          % input data is recognized as freq, is parcellated source-level data
+          % convert mom into fourierspctrm and convert
+          data.fourierspctrm = cat(1, data.mom{:}).';
+          data.dimord        = 'rpttap_chan_freq';
+          data               = rmfield(data, {'mom' 'momdimord'});
+          [data, powindx, hasrpt] = univariate2bivariate(data, 'fourierspctrm', 'powcovspctrm', dtype, 'demeanflag', strcmp(cfg.removemean, 'yes'), 'cmb', cfg.channelcmb, 'sqrtflag', strcmp(cfg.method, 'amplcorr'));
         end
       elseif strcmp(inparam, 'transfer')
         if isfield(data, 'fourierspctrm')
