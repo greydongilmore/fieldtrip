@@ -336,8 +336,14 @@ switch cfg.method
   case {'powcorr_ortho'}
     data = ft_checkdata(data, 'datatype', {'source', 'freq'});
     % inparam = 'avg.mom';
-    inparam = 'mom';
+    inparam  = 'mom';
     outparam = 'powcorrspctrm';
+    
+    tmpdimord = getdimord(data, inparam);
+    tmptok    = tokenize(tmpdimord, '_');
+    hasrpt    = any(~cellfun('isempty',strfind(tmptok, 'rpt')));
+    clear tmpdimord tmptok;
+    
   case {'mi'}
     % create the subcfg for the mutual information
     if ~isfield(cfg, 'mi'), cfg.mi = []; end
@@ -754,12 +760,17 @@ switch cfg.method
       % HACK
       dimord = getdimord(data, 'mom');
       dimtok = tokenize(dimord, '_');
-      posdim = find(strcmp(dimtok,'{pos}'));
-      posdim = 4; % we concatenate across positions...
       rptdim = find(~cellfun('isempty',strfind(dimtok,'rpt')));
       rptdim = rptdim-1; % the posdim has to be taken into account...
-      dat    = cat(4, data.mom{data.inside});
-      dat    = permute(dat,[posdim rptdim setdiff(1:ndims(dat),[posdim rptdim])]);
+      if find(strcmp(dimtok, '{pos}'))
+        sel = data.inside;
+        catdim = 4; % we concatenate across positions...
+      elseif find(strcmp(dimtok, '{chan}'))
+        sel = 1:numel(data.label);
+        catdim = 1;
+      end
+      dat    = cat(catdim, data.mom{sel});
+      dat    = permute(dat,[catdim rptdim setdiff(1:ndims(dat),[catdim rptdim])]);
       
       datout = ft_connectivity_powcorr_ortho(dat, optarg{:});
       
@@ -767,12 +778,16 @@ switch cfg.method
       % refindx specifications
       if ischar(cfg.refindx) && strcmp(cfg.refindx, 'all'),
         % create all-to-all output
-        tmp = zeros(numel(data.inside));
-        tmp(data.inside,data.inside) = datout;
-        datout = tmp;
-        clear tmp;
-        
-        outdimord = 'pos_pos_freq';
+        if find(strcmp(dimtok, '{pos}'))
+          tmp = zeros(numel(data.inside));
+          tmp(data.inside,data.inside) = datout;
+          datout = tmp;
+          clear tmp;
+          outdimord = 'pos_pos_freq';
+        elseif find(strcmp(dimtok, '{chan}'))
+          outdimord = 'chan_chan_freq';
+          data.dimord = outdimord;
+        end
       else
         % create all-to-few output
         tmp = zeros(numel(data.inside), numel(cfg.refindx));
@@ -934,14 +949,10 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 switch dtype
   case {'freq' 'freqmvar'},
-    stat = [];
-    if isfield(data, 'label'),
-      stat.label = data.label;
-    end
+    stat = keepfields(data, {'label' 'labelcmb' 'grad' 'elec' 'brainordinate'});
     if isfield(data, 'labelcmb'),
-      stat.labelcmb = data.labelcmb;
-      
-      % ensure the correct dimord in case the input was 'powandcsd'
+      % ensure the correct dimord in case the input was 'powandcsd' for
+      % correct dimord assignment later on
       data.dimord = strrep(data.dimord, 'chan_', 'chancmb_');
     end
     tok = tokenize(data.dimord, '_');
@@ -958,13 +969,7 @@ switch dtype
     end
     
   case 'timelock'
-    stat = [];
-    if isfield(data, 'label'),
-      stat.label = data.label;
-    end
-    if isfield(data, 'labelcmb'),
-      stat.labelcmb = data.labelcmb;
-    end
+    stat = keepfields(data, {'label' 'labelcmb' 'grad' 'elec' 'brainordinate'});
     
     % deal with the dimord
     if exist('outdimord', 'var'),
@@ -1009,8 +1014,7 @@ switch dtype
     end
   
   case 'raw'
-    stat = [];
-    stat.label = data.label;
+    stat = keepfields(data, {'label' 'grad' 'elec'});
     stat.(outparam) = datout;
     if ~isempty(varout),
       stat.([outparam, 'sem']) = (varout/nrpt).^0.5;
@@ -1030,8 +1034,6 @@ else
   if isfield(data, 'freq'), stat.freq = data.freq; end
   if isfield(data, 'time'), stat.time = data.time; end
 end
-if isfield(data, 'grad'), stat.grad = data.grad; end
-if isfield(data, 'elec'), stat.elec = data.elec; end
 if exist('dof', 'var'), stat.dof = dof; end
 
 % do the general cleanup and bookkeeping at the end of the function

@@ -177,7 +177,7 @@ end
 
 % start preparing the output data structure
 parcel       = keepfields(source, {'freq','time','cumtapcnt'});
-parcel.label = seglabel;
+parcel.label = seglabel(:);
 
 for i=1:numel(fn)
   % parcellate each of the desired parameters

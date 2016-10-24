@@ -20,7 +20,7 @@ switch style
         % ensure that the tissues have labels
         indexlabel = {};
         for j=1:length(indexval)
-          indexlabel{indexval(j)} = sprintf('tissue %d', indexval(j));
+          indexlabel{indexval(j),1} = sprintf('tissue %d', indexval(j));
         end
         segmentation.([fn{i} 'label']) = indexlabel;
       else

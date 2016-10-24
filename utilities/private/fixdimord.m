@@ -158,6 +158,9 @@ for i=1:length(dimtok)
 
     case {'{pos_pos}'}
       % this is for bivariate source data on a 3-d grid, a cortical sheet, or unstructured positions
+    
+    case {'{chan}' '{chan}_ori_rpt' '{chan}_ori_rpttap' '{chan}_ori_ori' '{chan}_ori_time'}
+      % this is for parcellated source level 'mom' or 'csd' type of data
       
     otherwise
       error(sprintf('unexpected dimord "%s"', data.dimord));
