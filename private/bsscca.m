@@ -26,6 +26,7 @@ time      = ft_getopt(varargin, 'time');
 Y         = ft_getopt(varargin, 'refdata', {});
 dowhiten  = istrue(ft_getopt(varargin, 'prewhiten',  0));
 tol       = ft_getopt(varargin, 'tol', 1e-6);
+method    = ft_getopt(varargin, 'method', 'cca');
 
 hasrefdata = ~isempty(Y);
 
@@ -120,9 +121,17 @@ else
   B((n+1):end,(n+1):end) = YY;
 end
 
-XXXY = XX\XY;
-YYYX = YY\YX;
-
+switch method
+  case 'cca'
+    XXXY = XX\XY;
+    YYYX = YY\YX;
+  case 'pls'
+    XXXY = XY;
+    YYYX = YX;
+  case 'mlr'
+    XXXY = XY;
+    YYYX = YY\YX;
+end
 [wx,rho]  = eig(XXXY*YYYX);
 [wy,rho2] = eig(YYYX*XXXY);
 
