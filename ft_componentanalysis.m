@@ -751,7 +751,7 @@ switch cfg.method
     
     optarg          = ft_cfg2keyval(cfg.bsscca);
     optarg          = cat(2,optarg, {'time', data.time});
-    [unmixing, mixing, rho, compdata, time] = bsscca(dat, optarg{:});
+    [unmixing, mixing, rho, compdata, time, whitendat, whitenref] = bsscca(dat, optarg{:});
     data.trial = mixing*compdata;
     data.time  = time;
     
@@ -763,6 +763,8 @@ switch cfg.method
       
     % remember the canonical correlations
     cfg.bsscca.rho = rho;
+    cfg.bsscca.whiten_dat = whitendat;
+    cfg.bsscca.whiten_ref = whitenref;
     
   case 'parafac'
     error('parafac is not supported anymore in ft_componentanalysis');

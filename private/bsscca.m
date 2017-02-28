@@ -1,4 +1,4 @@
-function [unmixing, mixing, rho, compdata, time] = bsscca(X, varargin)
+function [unmixing, mixing, rho, compdata, time, whiten_x, whiten_y] = bsscca(X, varargin)
 
 % BSSCCA computes the unmixing matrix based on the canonical correlation between 
 % two sets of (possibly multivariate) signals, the sets may contain time shifted copies. 
@@ -26,6 +26,8 @@ time      = ft_getopt(varargin, 'time');
 Y         = ft_getopt(varargin, 'refdata', {});
 dowhiten  = istrue(ft_getopt(varargin, 'prewhiten',  0));
 tol       = ft_getopt(varargin, 'tol', 1e-6);
+reftol    = ft_getopt(varargin, 'reftol',  tol);
+chantol   = ft_getopt(varargin, 'chantol', tol);
 method    = ft_getopt(varargin, 'method', 'cca');
 
 hasrefdata = ~isempty(Y);
@@ -61,8 +63,8 @@ if isa(X, 'cell')
     sx = diag(sx);
     sy = diag(sy);
     
-    keepx = sx./sx(1)>tol;
-    keepy = sy./sy(1)>tol;
+    keepx = sx./sx(1)>chantol;
+    keepy = sy./sy(1)>reftol;
     
     fprintf('whitening the data, keeping %d signal components in X\n', sum(keepx));
     fprintf('whitening the data, keeping %d signal components in Y\n', sum(keepy));
@@ -75,6 +77,9 @@ if isa(X, 'cell')
     
     X = whiten_x*X;
     Y = whiten_y*Y;
+  else
+    whiten_x = [];
+    whiten_y = [];
   end
 
   
