@@ -237,11 +237,16 @@ classdef crossvalidator
         function y = create_test_folds(Y)
           
           % use the same ordering for multiple datasets by reinitializing the random number generator
-          try
-            RandStream.setGlobalStream(RandStream('mt19937ar','seed',1));
-          catch
-            rand('twister',1); randn('state',1);
-          end
+          
+          % Commented this hard-coded random seed out, should be handled
+          % via ft_timelockstatistics by specifying cfg.randomseed [January
+          % 2018, SA]
+          
+%           try
+%             RandStream.setGlobalStream(RandStream('mt19937ar','seed',1));
+%           catch
+%             rand('twister',1); randn('state',1);
+%           end
           
           y = cell(obj.folds,1);
           
@@ -303,7 +308,7 @@ classdef crossvalidator
                 
                 % take labeled indices
                 idx = idx(idxs);
-                
+                %loop through folds and evenly distribute each class [sa]
                 f=1;
                 for j=1:mx
                   iidx = find(idx == j);
